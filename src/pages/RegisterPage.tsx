@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { register as registerApi } from '@/api/auth';
+import { DEMO_MODE, mockUser } from '@/api/mockData';
 import { Eye, EyeOff, GraduationCap, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ const RegisterPage = () => {
   const { toast } = useToast();
 
   const validate = () => {
+    if (DEMO_MODE) return true;
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = 'Name is required';
     if (!email.trim()) errs.email = 'Email is required';
@@ -35,6 +37,13 @@ const RegisterPage = () => {
     if (!validate()) return;
     setLoading(true);
     try {
+      if (DEMO_MODE) {
+        await new Promise(r => setTimeout(r, 800));
+        loginUser({ token: mockUser.token, name: name || mockUser.name, email: email || mockUser.email, role: mockUser.role });
+        toast({ title: 'Account created!', description: 'Welcome to ExamSphere (Demo Mode).' });
+        navigate('/dashboard');
+        return;
+      }
       const res = await registerApi({ name, email, password });
       loginUser({ token: res.data.token, name: res.data.name, email: res.data.email, role: res.data.role });
       toast({ title: 'Account created!', description: 'Welcome to ExamSphere.' });
@@ -74,6 +83,11 @@ const RegisterPage = () => {
             </div>
             <span className="text-lg font-bold">ExamSphere</span>
           </div>
+          {DEMO_MODE && (
+            <div className="bg-primary/10 text-primary text-xs font-medium rounded-lg px-3 py-2 mb-4 text-center">
+              🎯 Demo Mode — Click Create Account to explore
+            </div>
+          )}
           <h2 className="text-2xl font-bold text-foreground mb-1">Create your account</h2>
           <p className="text-muted-foreground text-sm mb-6">Get started with free mock exams</p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

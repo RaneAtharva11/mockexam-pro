@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getResult } from '@/api/results';
+import { DEMO_MODE, getMockResult } from '@/api/mockData';
 import Navbar from '@/components/Navbar';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -18,22 +19,28 @@ const ResultPage = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await getResult(Number(attemptId));
-        setResult(res.data);
+        if (DEMO_MODE) {
+          await new Promise(r => setTimeout(r, 800));
+          setResult(getMockResult(Number(attemptId)));
+        } else {
+          const res = await getResult(Number(attemptId));
+          setResult(res.data);
+        }
       } catch {}
       setLoading(false);
     };
     load();
 
-    // Poll for percentile
-    const interval = setInterval(async () => {
-      try {
-        const res = await getResult(Number(attemptId));
-        setResult(res.data);
-        if (res.data.percentileReady) clearInterval(interval);
-      } catch {}
-    }, 60000);
-    return () => clearInterval(interval);
+    if (!DEMO_MODE) {
+      const interval = setInterval(async () => {
+        try {
+          const res = await getResult(Number(attemptId));
+          setResult(res.data);
+          if (res.data.percentileReady) clearInterval(interval);
+        } catch {}
+      }, 60000);
+      return () => clearInterval(interval);
+    }
   }, [attemptId]);
 
   if (loading) return <><Navbar /><LoadingSpinner text="Calculating your score..." /></>;
@@ -42,7 +49,6 @@ const ResultPage = () => {
   const { score, totalMarks, correct, wrong, unattempted, percentile, percentileReady, questionResults = [] } = result;
   const accuracy = correct + wrong > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
 
-  // Subject analysis
   const subjectMap: Record<string, { correct: number; wrong: number; unattempted: number }> = {};
   questionResults.forEach((qr: any) => {
     if (!subjectMap[qr.subject]) subjectMap[qr.subject] = { correct: 0, wrong: 0, unattempted: 0 };
@@ -71,7 +77,6 @@ const ResultPage = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Score Card */}
         <div className="bg-card rounded-xl border shadow-sm p-8 mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">{result.examName} — Result</h1>
           <div className="flex items-baseline justify-center gap-1 mb-4">
@@ -97,7 +102,6 @@ const ResultPage = () => {
           </div>
         </div>
 
-        {/* Percentile */}
         <div className="bg-card rounded-xl border shadow-sm p-6 mb-6">
           {percentileReady ? (
             <div className="text-center">
@@ -112,7 +116,6 @@ const ResultPage = () => {
           )}
         </div>
 
-        {/* Subject Chart */}
         {chartData.length > 0 && (
           <div className="bg-card rounded-xl border shadow-sm p-6 mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Subject-wise Performance</h2>
@@ -131,7 +134,6 @@ const ResultPage = () => {
           </div>
         )}
 
-        {/* Question Review */}
         <div className="bg-card rounded-xl border shadow-sm p-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <h2 className="text-lg font-semibold text-foreground">Review All Questions</h2>
