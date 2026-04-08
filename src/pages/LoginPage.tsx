@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { login as loginApi } from '@/api/auth';
+import { DEMO_MODE, mockUser } from '@/api/mockData';
 import { Eye, EyeOff, GraduationCap, Clock, Sparkles, BarChart3, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,13 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
     try {
+      if (DEMO_MODE) {
+        await new Promise(r => setTimeout(r, 800));
+        loginUser({ token: mockUser.token, name: mockUser.name, email: mockUser.email, role: mockUser.role });
+        toast({ title: 'Welcome back!', description: 'Logged in successfully (Demo Mode).' });
+        navigate('/dashboard');
+        return;
+      }
       const res = await loginApi({ email, password });
       loginUser({ token: res.data.token, name: res.data.name, email: res.data.email, role: res.data.role });
       toast({ title: 'Welcome back!', description: 'Logged in successfully.' });
@@ -74,17 +82,22 @@ const LoginPage = () => {
             </div>
             <span className="text-lg font-bold">ExamSphere</span>
           </div>
+          {DEMO_MODE && (
+            <div className="bg-primary/10 text-primary text-xs font-medium rounded-lg px-3 py-2 mb-4 text-center">
+              🎯 Demo Mode — Click Login with any credentials to explore
+            </div>
+          )}
           <h2 className="text-2xl font-bold text-foreground mb-1">Welcome back</h2>
           <p className="text-muted-foreground text-sm mb-6">Login to continue your preparation</p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Email</label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Password</label>
               <div className="relative">
-                <Input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                <Input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getAllExams } from '@/api/exams';
 import { startAttempt } from '@/api/attempts';
+import { DEMO_MODE, mockExams } from '@/api/mockData';
 import Navbar from '@/components/Navbar';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,12 @@ const ExamDetailPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      const found = mockExams.find(e => e.examId === Number(examId));
+      setExam(found || null);
+      setLoading(false);
+      return;
+    }
     getAllExams()
       .then(res => {
         const found = res.data.find((e: any) => e.examId === Number(examId));
@@ -30,6 +37,14 @@ const ExamDetailPage = () => {
     setStarting(true);
     setError('');
     try {
+      if (DEMO_MODE) {
+        await new Promise(r => setTimeout(r, 600));
+        const firstPaperId = exam.papers?.[0]?.paperId || 1;
+        const demoAttemptId = 1001;
+        toast({ title: 'Exam started successfully!' });
+        navigate(`/exam/${examId}/paper/${firstPaperId}/attempt/${demoAttemptId}`);
+        return;
+      }
       const res = await startAttempt(Number(examId));
       const attemptId = res.data.attemptId;
       const firstPaperId = exam.papers?.[0]?.paperId || 1;

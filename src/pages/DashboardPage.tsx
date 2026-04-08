@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllExams } from '@/api/exams';
+import { DEMO_MODE, mockExams } from '@/api/mockData';
 import Navbar from '@/components/Navbar';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,10 @@ const DashboardPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setTimeout(() => { setExams(mockExams as Exam[]); setLoading(false); }, 500);
+      return;
+    }
     getAllExams()
       .then(res => setExams(res.data))
       .catch(() => {})

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getResult } from '@/api/results';
-import { getExplanations } from '@/api/results';
+import { getResult, getExplanations } from '@/api/results';
+import { DEMO_MODE, getMockResult, getMockExplanations } from '@/api/mockData';
 import Navbar from '@/components/Navbar';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { ArrowLeft, Sparkles, XCircle, MinusCircle, Loader2 } from 'lucide-react';
@@ -18,21 +18,26 @@ const ExplanationPage = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [resResult, resExp] = await Promise.all([
-          getResult(Number(attemptId)),
-          getExplanations(Number(attemptId)),
-        ]);
-        setResult(resResult.data);
-        setExplanationsMap(resExp.data || {});
+        if (DEMO_MODE) {
+          await new Promise(r => setTimeout(r, 600));
+          setResult(getMockResult(Number(attemptId)));
+          setExplanationsMap(getMockExplanations(Number(attemptId)));
+        } else {
+          const [resResult, resExp] = await Promise.all([
+            getResult(Number(attemptId)),
+            getExplanations(Number(attemptId)),
+          ]);
+          setResult(resResult.data);
+          setExplanationsMap(resExp.data || {});
+        }
       } catch {}
       setLoading(false);
     };
     load();
   }, [attemptId]);
 
-  // Poll for pending explanations
   useEffect(() => {
-    if (!result) return;
+    if (!result || DEMO_MODE) return;
     const wrongOrUnattempted = (result.questionResults || []).filter(
       (qr: any) => qr.result === 'WRONG' || qr.result === 'UNATTEMPTED'
     );
@@ -110,7 +115,6 @@ const ExplanationPage = () => {
                       );
                     })}
                   </div>
-                  {/* AI Explanation */}
                   <div className="border-l-4 border-secondary rounded-r-lg bg-secondary/5 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles className="h-4 w-4 text-secondary" />

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getQuestions } from '@/api/exams';
 import { getAttemptStatus, saveResponse, submitAttempt } from '@/api/attempts';
+import { DEMO_MODE, getMockQuestions } from '@/api/mockData';
 import ExamTimer from '@/components/exam/ExamTimer';
 import QuestionCard from '@/components/exam/QuestionCard';
 import QuestionPalette from '@/components/exam/QuestionPalette';
@@ -38,17 +39,22 @@ const ExamPage = () => {
 
   const aid = Number(attemptId);
 
-  // Load questions & initial status
   useEffect(() => {
     const load = async () => {
       try {
+        if (DEMO_MODE) {
+          const mockQs = getMockQuestions(Number(examId), Number(paperId));
+          setQuestions(mockQs);
+          setRemainingSeconds(180 * 60); // 3 hours
+          setLoading(false);
+          return;
+        }
         const [qRes, sRes] = await Promise.all([
           getQuestions(Number(examId), Number(paperId)),
           getAttemptStatus(aid),
         ]);
         setQuestions(qRes.data);
         setRemainingSeconds(sRes.data.remainingSeconds);
-        // Restore answers if any
         if (sRes.data.responses) {
           const restored: Record<number, string | null> = {};
           sRes.data.responses.forEach((r: any) => {
@@ -65,14 +71,12 @@ const ExamPage = () => {
     load();
   }, [examId, paperId, aid]);
 
-  // Mark visited
   useEffect(() => {
     if (questions.length > 0) {
       setVisited(prev => new Set(prev).add(questions[currentIdx]?.id));
     }
   }, [currentIdx, questions]);
 
-  // Anti-cheat
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', handler);
@@ -80,6 +84,7 @@ const ExamPage = () => {
   }, []);
 
   const syncTimer = useCallback(async () => {
+    if (DEMO_MODE) return;
     try {
       const res = await getAttemptStatus(aid);
       const status = res.data.status;
@@ -95,22 +100,28 @@ const ExamPage = () => {
   const handleSelect = async (optionKey: string) => {
     const q = questions[currentIdx];
     setAnswers(prev => ({ ...prev, [q.id]: optionKey }));
-    try {
-      await saveResponse(aid, { questionId: q.id, selectedOption: optionKey });
-    } catch {}
+    if (!DEMO_MODE) {
+      try { await saveResponse(aid, { questionId: q.id, selectedOption: optionKey }); } catch {}
+    }
   };
 
   const handleClear = async () => {
     const q = questions[currentIdx];
     setAnswers(prev => ({ ...prev, [q.id]: null }));
-    try {
-      await saveResponse(aid, { questionId: q.id, selectedOption: null });
-    } catch {}
+    if (!DEMO_MODE) {
+      try { await saveResponse(aid, { questionId: q.id, selectedOption: null }); } catch {}
+    }
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
+      if (DEMO_MODE) {
+        await new Promise(r => setTimeout(r, 800));
+        toast({ title: 'Exam submitted!' });
+        navigate(`/result/${aid}`);
+        return;
+      }
       await submitAttempt(aid);
       toast({ title: 'Exam submitted!' });
       navigate(`/result/${aid}`);
@@ -134,13 +145,10 @@ const ExamPage = () => {
   ];
 
   const answeredCount = Object.values(answers).filter(v => v != null).length;
-
-  // Get unique subjects for tabs
   const subjects = [...new Set(questions.map(q => q.subject))];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-card border-b shadow-sm px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
@@ -179,9 +187,7 @@ const ExamPage = () => {
         </div>
       </header>
 
-      {/* Body */}
       <div className="flex-1 flex max-w-7xl mx-auto w-full">
-        {/* Question area */}
         <div className="flex-1 p-6 overflow-auto">
           <QuestionCard
             questionNumber={currentIdx + 1}
@@ -199,7 +205,6 @@ const ExamPage = () => {
           />
         </div>
 
-        {/* Palette — desktop */}
         <div className="hidden lg:block w-80 border-l p-4 overflow-auto">
           <QuestionPalette
             questions={questions}
@@ -211,7 +216,6 @@ const ExamPage = () => {
         </div>
       </div>
 
-      {/* Mobile palette drawer */}
       {showPalette && (
         <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-card border-t shadow-xl p-4 max-h-[60vh] overflow-auto rounded-t-2xl">
           <QuestionPalette
