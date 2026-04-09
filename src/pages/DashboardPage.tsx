@@ -36,7 +36,7 @@ const mapExam = (raw: any): Exam => ({
   papers: (raw.papers || []).map((p: any) => ({
     paperId: p.paperId ?? p.id,
     paperName: p.paperName ?? `Paper ${p.paperNumber ?? p.paper_number ?? ''}`.trim(),
-    subjects: Array.isArray(p.subjects) ? p.subjects : (typeof p.subjects === 'string' ? p.subjects.split(',').map((s: string) => s.trim()) : []),
+    subjects: Array.isArray(p.subjects) ? p.subjects.map(String) : (typeof p.subjects === 'string' ? p.subjects.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
   })),
 });
 
