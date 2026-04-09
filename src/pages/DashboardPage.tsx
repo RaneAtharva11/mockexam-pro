@@ -24,6 +24,22 @@ interface Exam {
   papers: Paper[];
 }
 
+// Maps backend response fields to frontend interface
+const mapExam = (raw: any): Exam => ({
+  examId: raw.examId ?? raw.id,
+  examName: raw.examName ?? raw.name,
+  totalQuestions: raw.totalQuestions ?? raw.total_questions,
+  durationMinutes: raw.durationMinutes ?? Math.floor((raw.durationSeconds ?? raw.duration_seconds ?? 0) / 60),
+  correctMarks: raw.correctMarks ?? raw.marksCorrect ?? raw.marks_correct ?? 0,
+  wrongMarks: raw.wrongMarks ?? raw.marksWrong ?? raw.marks_wrong ?? 0,
+  unattemptedMarks: raw.unattemptedMarks ?? raw.marksUnattempted ?? raw.marks_unattempted ?? 0,
+  papers: (raw.papers || []).map((p: any) => ({
+    paperId: p.paperId ?? p.id,
+    paperName: p.paperName ?? `Paper ${p.paperNumber ?? p.paper_number ?? ''}`.trim(),
+    subjects: Array.isArray(p.subjects) ? p.subjects : (typeof p.subjects === 'string' ? p.subjects.split(',').map((s: string) => s.trim()) : []),
+  })),
+});
+
 const accentColors: Record<string, string> = {
   JEE: 'border-l-primary',
   'MHT-CET': 'border-l-secondary',
@@ -42,8 +58,14 @@ const DashboardPage = () => {
       return;
     }
     getAllExams()
-      .then(res => setExams(res.data))
-      .catch(() => {})
+      .then(res => {
+        console.log('Exams API response:', res.data);
+        const data = Array.isArray(res.data) ? res.data : (res.data?.exams || res.data?.data || []);
+        setExams(data.map(mapExam));
+      })
+      .catch((err) => {
+        console.error('Failed to load exams:', err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
