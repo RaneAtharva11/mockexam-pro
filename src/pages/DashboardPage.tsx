@@ -36,7 +36,7 @@ const mapExam = (raw: any): Exam => ({
   papers: (raw.papers || []).map((p: any) => ({
     paperId: p.paperId ?? p.id,
     paperName: p.paperName ?? `Paper ${p.paperNumber ?? p.paper_number ?? ''}`.trim(),
-    subjects: Array.isArray(p.subjects) ? p.subjects : (typeof p.subjects === 'string' ? p.subjects.split(',').map((s: string) => s.trim()) : []),
+    subjects: Array.isArray(p.subjects) ? p.subjects.map(String) : (typeof p.subjects === 'string' ? p.subjects.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
   })),
 });
 
@@ -101,7 +101,7 @@ const DashboardPage = () => {
                 <div className="flex flex-wrap gap-2 mb-5">
                   {exam.papers.map(p => (
                     <span key={p.paperId} className="text-xs bg-secondary/20 text-secondary px-2.5 py-1 rounded-lg font-medium">
-                      {p.paperName} — {p.subjects.join(', ')}
+                      {p.paperName} — {Array.isArray(p.subjects) ? p.subjects.join(', ') : String(p.subjects || '')}
                     </span>
                   ))}
                 </div>
