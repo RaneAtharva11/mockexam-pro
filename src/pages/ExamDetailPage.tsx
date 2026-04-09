@@ -78,7 +78,7 @@ const ExamDetailPage = () => {
               ['Duration', `${exam.durationMinutes} minutes`],
               ['Marking', `+${exam.correctMarks} / ${exam.wrongMarks} / ${exam.unattemptedMarks}`],
               ['Total Marks', totalMarks],
-              ['Papers', exam.papers?.map((p: any) => `${p.paperName} (${p.subjects.join(', ')})`).join(', ') || '-'],
+              ['Papers', exam.papers?.map((p: any) => `${p.paperName ?? `Paper ${p.paperNumber ?? p.paper_number ?? ''}`} (${Array.isArray(p.subjects) ? p.subjects.join(', ') : String(p.subjects || '')})`).join(', ') || '-'],
             ].map(([label, value]) => (
               <div key={String(label)} className="flex flex-col">
                 <span className="text-muted-foreground text-xs">{label}</span>
