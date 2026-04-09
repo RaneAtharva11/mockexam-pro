@@ -101,7 +101,7 @@ const DashboardPage = () => {
                 <div className="flex flex-wrap gap-2 mb-5">
                   {exam.papers.map(p => (
                     <span key={p.paperId} className="text-xs bg-secondary/20 text-secondary px-2.5 py-1 rounded-lg font-medium">
-                      {p.paperName} — {p.subjects.join(', ')}
+                      {p.paperName} — {Array.isArray(p.subjects) ? p.subjects.join(', ') : String(p.subjects || '')}
                     </span>
                   ))}
                 </div>
