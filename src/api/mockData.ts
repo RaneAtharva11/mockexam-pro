@@ -1,6 +1,6 @@
 // Demo/mock data for previewing the app without a backend
 
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 export const mockUser = {
   token: 'demo-token-123',
