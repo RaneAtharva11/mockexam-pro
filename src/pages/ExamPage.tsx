@@ -53,7 +53,17 @@ const ExamPage = () => {
           getQuestions(Number(examId), Number(paperId)),
           getAttemptStatus(aid),
         ]);
-        setQuestions(qRes.data);
+        const rawQuestions = Array.isArray(qRes.data) ? qRes.data : (qRes.data?.questions || []);
+        setQuestions(rawQuestions.map((q: any) => ({
+          id: q.id ?? q.questionId,
+          questionText: q.questionText ?? q.question_text ?? q.text ?? '',
+          optionA: q.optionA ?? q.option_a ?? '',
+          optionB: q.optionB ?? q.option_b ?? '',
+          optionC: q.optionC ?? q.option_c ?? '',
+          optionD: q.optionD ?? q.option_d ?? '',
+          subject: q.subject ?? '',
+          chapter: q.chapter ?? '',
+        })));
         setRemainingSeconds(sRes.data.remainingSeconds);
         if (sRes.data.responses) {
           const restored: Record<number, string | null> = {};

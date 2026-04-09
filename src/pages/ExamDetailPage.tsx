@@ -9,6 +9,27 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const parseSubjects = (subjects: any): string[] => {
+  if (Array.isArray(subjects)) return subjects.map(String);
+  if (typeof subjects === 'string') return subjects.split(',').map(s => s.trim()).filter(Boolean);
+  return [];
+};
+
+const mapExam = (raw: any) => ({
+  examId: raw.examId ?? raw.id,
+  examName: raw.examName ?? raw.name,
+  totalQuestions: raw.totalQuestions ?? raw.total_questions ?? 0,
+  durationMinutes: raw.durationMinutes ?? Math.floor((raw.durationSeconds ?? raw.duration_seconds ?? 0) / 60),
+  correctMarks: raw.correctMarks ?? raw.marksCorrect ?? raw.marks_correct ?? 0,
+  wrongMarks: raw.wrongMarks ?? raw.marksWrong ?? raw.marks_wrong ?? 0,
+  unattemptedMarks: raw.unattemptedMarks ?? raw.marksUnattempted ?? raw.marks_unattempted ?? 0,
+  papers: (raw.papers || []).map((p: any) => ({
+    paperId: p.paperId ?? p.id,
+    paperName: p.paperName ?? `Paper ${p.paperNumber ?? p.paper_number ?? ''}`.trim(),
+    subjects: parseSubjects(p.subjects),
+  })),
+});
+
 const ExamDetailPage = () => {
   const { examId } = useParams<{ examId: string }>();
   const [exam, setExam] = useState<any>(null);
@@ -21,14 +42,15 @@ const ExamDetailPage = () => {
   useEffect(() => {
     if (DEMO_MODE) {
       const found = mockExams.find(e => e.examId === Number(examId));
-      setExam(found || null);
+      setExam(found ? mapExam(found) : null);
       setLoading(false);
       return;
     }
     getAllExams()
       .then(res => {
-        const found = res.data.find((e: any) => e.examId === Number(examId));
-        setExam(found || null);
+        const data = Array.isArray(res.data) ? res.data : (res.data?.exams || res.data?.data || []);
+        const found = data.find((e: any) => (e.examId ?? e.id) === Number(examId));
+        setExam(found ? mapExam(found) : null);
       })
       .finally(() => setLoading(false));
   }, [examId]);
@@ -46,7 +68,7 @@ const ExamDetailPage = () => {
         return;
       }
       const res = await startAttempt(Number(examId));
-      const attemptId = res.data.attemptId;
+      const attemptId = res.data.attemptId ?? res.data.id;
       const firstPaperId = exam.papers?.[0]?.paperId || 1;
       toast({ title: 'Exam started successfully!' });
       navigate(`/exam/${examId}/paper/${firstPaperId}/attempt/${attemptId}`);
@@ -78,7 +100,7 @@ const ExamDetailPage = () => {
               ['Duration', `${exam.durationMinutes} minutes`],
               ['Marking', `+${exam.correctMarks} / ${exam.wrongMarks} / ${exam.unattemptedMarks}`],
               ['Total Marks', totalMarks],
-              ['Papers', exam.papers?.map((p: any) => `${p.paperName ?? `Paper ${p.paperNumber ?? p.paper_number ?? ''}`} (${Array.isArray(p.subjects) ? p.subjects.join(', ') : String(p.subjects || '')})`).join(', ') || '-'],
+              ['Papers', exam.papers?.map((p: any) => `${p.paperName} (${p.subjects.join(', ')})`).join(', ') || '-'],
             ].map(([label, value]) => (
               <div key={String(label)} className="flex flex-col">
                 <span className="text-muted-foreground text-xs">{label}</span>
