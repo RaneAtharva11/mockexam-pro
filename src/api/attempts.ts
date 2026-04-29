@@ -11,3 +11,5 @@ export const saveResponse = (attemptId: number, data: { questionId: number; sele
 
 export const submitAttempt = (attemptId: number) =>
   api.post(`/api/attempts/${attemptId}/submit`);
+
+export const getMyAttempts = () => api.get('/api/attempts/me');
