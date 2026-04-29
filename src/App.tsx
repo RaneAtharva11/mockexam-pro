@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
 import ExamDetailPage from "./pages/ExamDetailPage";
 import ExamPage from "./pages/ExamPage";
 import ResultPage from "./pages/ResultPage";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/exam/:examId" element={<ProtectedRoute><ExamDetailPage /></ProtectedRoute>} />
             <Route path="/exam/:examId/paper/:paperId/attempt/:attemptId" element={<ProtectedRoute><ExamPage /></ProtectedRoute>} />
             <Route path="/result/:attemptId" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
