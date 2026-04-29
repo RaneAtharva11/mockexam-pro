@@ -29,9 +29,13 @@ const Navbar = () => {
           Hello, <span className="font-semibold text-foreground">{userName}</span>!
         </span>
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
+          <button
+            onClick={() => navigate('/profile')}
+            aria-label="Open profile"
+            className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity ring-offset-2 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
             {initials}
-          </div>
+          </button>
           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
             <LogOut className="h-4 w-4 mr-1" /> Logout
           </Button>
